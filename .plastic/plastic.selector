@@ -1,0 +1,4 @@
+repository "Gamejam2024@PenguinPiz@cloud"
+  path "/"
+    br "/main"
+    co "/main"
