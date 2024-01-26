@@ -1,89 +1,82 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class RoomSpawner : MonoBehaviour
 {
-    public enum OpeningDirection { Left = 3, Right = 4, Top = 2, Bottom = 1};
-    // 1 bottom
-    // 2 top
-    // 3 left
-    // 4 right
 
-    private RoomTemplates roomTemplates;
+    public Direction openingDirection;
+
+    /** @enum for indicating the direction of where a Door is needed in the Room that will be spawned*/
+    public enum Direction
+    {
+        TOP, BOTTOM, LEFT, RIGHT
+    }
+
+    private RoomTemplates templates;
     private int rand;
-    
     public bool spawned = false;
-    public float waitTime = 4f;
-    public OpeningDirection openingDirection = OpeningDirection.Bottom;
 
-    private void Start()
+    void Start()
     {
-        Destroy(gameObject, waitTime);
-        roomTemplates = GameObject.FindGameObjectWithTag("Rooms").GetComponent<RoomTemplates>();
+        templates = GameObject.FindGameObjectWithTag("Rooms").GetComponent<RoomTemplates>();
 
-        Invoke("Spawn", 1f);
+        Invoke("Spawn", 0.1f) ;
     }
 
-
-    private void Spawn()
+    void Spawn()
     {
-        if (spawned == false)
-        {
-            if (openingDirection == OpeningDirection.Bottom)
+        /** Check if @Spawnpoint has already spawner a Room, to prevent multiple Rooms on one @Spawnpoint */
+        if (!spawned) {
+
+        /** Spawn the right Room at the location of the @Spawnpoint */
+            switch (openingDirection)
             {
-                //spawn room with bot
-                rand = Random.Range(0, roomTemplates.bottomRooms.Length);
-                Instantiate(roomTemplates.bottomRooms[rand], transform.position,
-                    roomTemplates.bottomRooms[rand].transform.rotation);
+            case Direction.TOP:
+                rand = UnityEngine.Random.Range(0, templates.topRooms.Length);
+                Instantiate(templates.topRooms[rand], transform.position, Quaternion.identity);
+                break;
+            case Direction.BOTTOM:
+                rand = UnityEngine.Random.Range(0, templates.bottomRooms.Length);
+                Instantiate(templates.bottomRooms[rand], transform.position, Quaternion.identity);
+                break;
+            case Direction.LEFT:
+                rand = UnityEngine.Random.Range(0, templates.leftRooms.Length);
+                Instantiate(templates.leftRooms[rand], transform.position, Quaternion.identity);
+                break;
+            case Direction.RIGHT:
+                rand = UnityEngine.Random.Range(0, templates.rightRooms.Length);
+                Instantiate(templates.rightRooms[rand], transform.position, Quaternion.identity);
+                break;
+            default:
+                break;
 
             }
-            else if (openingDirection == OpeningDirection.Top)
-            {
-                //spawn room with top
-                rand = Random.Range(0, roomTemplates.topRooms.Length);
-                Instantiate(roomTemplates.topRooms[rand], transform.position,
-                    roomTemplates.topRooms[rand].transform.rotation);
-            }
-            else if (openingDirection == OpeningDirection.Left)
-            {
-                //spawn room with left
-                rand = Random.Range(0, roomTemplates.leftRooms.Length);
-                Instantiate(roomTemplates.leftRooms[rand], transform.position,
-                    roomTemplates.leftRooms[rand].transform.rotation);
-            }
-            else if (openingDirection == OpeningDirection.Right)
-            {
-                //spawn room with right
-                rand = Random.Range(0, roomTemplates.rightRooms.Length);
-                Instantiate(roomTemplates.rightRooms[rand], transform.position,
-                    roomTemplates.rightRooms[rand].transform.rotation);
-            }
-
-
             spawned = true;
         }
 
-        
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    //NULL REFERENCE
+    void OnTriggerEnter2D(Collider2D other)
     {
-        if (collision.CompareTag("SpawnPoint"))
+        if (other.CompareTag("SpawnPoint") && other != null)
         {
+            try {
+            if (other.GetComponent<RoomSpawner>().spawned == false && spawned == false)
+            {
+                Instantiate(templates.closedRoom, transform.position, Quaternion.identity);
+                Destroy(gameObject);
+            }
 
-            if (collision.TryGetComponent<RoomSpawner>(out RoomSpawner hinge))
-            {
-                if (collision.GetComponent<RoomSpawner>().spawned == false && spawned == false)
-                {
-                    Destroy(gameObject);
-                }
-            }
-            else
-            {
-                Debug.Log("Componen not found");
-            }
             spawned = true;
+        } catch (NullReferenceException exception)
+            {
+
+            }
         }
     }
+
 }
